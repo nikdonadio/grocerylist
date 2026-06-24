@@ -1,0 +1,93 @@
+service: grocerylist
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: eu-west-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    TABLE_NAME: ${self:service}-${self:provider.stage}
+    # IS_LOCAL: ${env:IS_LOCAL, ''}
+    IS_LOCAL: "true"
+    IS_OFFLINE: "true"   
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_NAME}
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-plugin-typescript
+  - serverless-offline
+
+# Plugin order matters: dynamodb-local must come before serverless-offline
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true      # no persistence between restarts, fine for dev
+      migrate: true       # auto-creates the table from resources section below
+
+functions:
+  getList:
+    handler: src/handlers/getList.handler
+    events:
+      - http:
+          path: /list/{accessToken}
+          method: GET
+          cors: true
+
+  addItem:
+    handler: src/handlers/addItem.handler
+    events:
+      - http:
+          path: /list/{accessToken}/items
+          method: POST
+          cors: true
+
+  updateItem:
+    handler: src/handlers/updateItem.handler
+    events:
+      - http:
+          path: /list/{accessToken}/items/{itemId}
+          method: PUT
+          cors: true
+
+  deleteItem:
+    handler: src/handlers/deleteItem.handler
+    events:
+      - http:
+          path: /list/{accessToken}/items/{itemId}
+          method: DELETE
+          cors: true
+
+resources:
+  Resources:
+    ShoppingListTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: accessToken
+            AttributeType: S
+          - AttributeName: itemId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: accessToken
+            KeyType: HASH
+          - AttributeName: itemId
+            KeyType: RANGE

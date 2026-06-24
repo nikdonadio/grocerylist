@@ -141,3 +141,14 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+#IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+#AWS sam
+.aws-sam/
+cdk.out/
+.aws/

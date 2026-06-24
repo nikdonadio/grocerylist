@@ -1,0 +1,173 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0 1.25rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.btn-refresh {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: #555;
+}
+
+.btn-refresh:disabled {
+  opacity: 0.4;
+}
+
+/* ── Add form ── */
+.add-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.add-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+  background: #fff;
+}
+
+.add-input:focus {
+  border-color: #4a90d9;
+}
+
+.btn-add {
+  padding: 0.75rem 1.25rem;
+  background: #4a90d9;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── Item list ── */
+.item-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+.item-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  cursor: pointer;
+}
+
+.item-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #4a90d9;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.item-name {
+  font-size: 1rem;
+}
+
+.item--checked .item-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.btn-delete:hover {
+  color: #e05252;
+  background: #fef2f2;
+}
+
+/* ── Sections ── */
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.checked-list {
+  opacity: 0.6;
+}
+
+/* ── States ── */
+.loading,
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 2rem 0;
+  font-size: 0.95rem;
+}
+
+.error {
+  background: #fef2f2;
+  color: #c0392b;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
