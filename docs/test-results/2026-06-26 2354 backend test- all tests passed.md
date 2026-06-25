@@ -102,3 +102,35 @@ ALL TESTS PASSED (15/15)
 ────────────────────────────────────────────
 Running: 04-deleteItem.ts
 ────────────────────────────────────────────
+========================================
+TEST FILE: 04-deleteItem.ts
+Token: test-1782424411409
+========================================
+Setup — created items: f306f5fa-4e21-4bc6-9674-bd5180edf9c9 3e2f85c7-affa-47a1-a4a5-2947578c8f38
+
+▶ DELETE — remove existing item
+  ✓ Status is 200
+  ✓ deleted ID matches
+
+▶ GET — deleted item no longer in list
+  ✓ Deleted item absent
+  ✓ Other item still present
+
+▶ DELETE — idempotent (delete non-existent item)
+  ✓ Status is still 200 (idempotent)
+
+▶ DELETE — remove last item, list becomes empty
+  ✓ List is now empty
+
+────────────────────────────────────────
+ALL TESTS PASSED (6/6)
+
+════════════════════════════════════════════
+FINAL SUMMARY
+════════════════════════════════════════════
+  ✓  01-getList.ts                PASS
+  ✓  02-addItem.ts                PASS
+  ✓  03-updateItem.ts             PASS
+  ✓  04-deleteItem.ts             PASS
+
+ALL SUITES PASSED ✓
