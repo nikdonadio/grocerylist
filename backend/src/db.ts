@@ -8,7 +8,8 @@ const isLocal = true
 
 const client = new DynamoDBClient(
   isLocal
-    ? {
+    ? 
+      {
         region: "eu-west-1",
         endpoint: "http://localhost:8000",
         credentials: {
@@ -16,22 +17,22 @@ const client = new DynamoDBClient(
           accessKeyId: "local",
           secretAccessKey: "local",
         },
+        logger: console,
       }
     : {
         region: process.env.AWS_REGION ?? "eu-west-1",
       }
 );
 
+client.middlewareStack.add(
+  (next) => async (args) => {
+    console.log("DDB REQUEST =>", args.request);
+    return next(args);
+  },
+  { step: "build" }
+);
+
 export const db = DynamoDBDocumentClient.from(client);
 
 export const TABLE_NAME = process.env.TABLE_NAME ?? "grocerylist-dev";
 
-console.log("-------------------------------- DB TS")
-console.log("IS_LOCAL:", process.env.IS_LOCAL);
-console.log("IS_OFFLINE:", process.env.IS_OFFLINE);
-console.log("TABLE_NAME:", process.env.TABLE_NAME);
-console.log("DDB CLIENT INIT", {
-  region: client.config.region,
-  endpoint: client.config.endpoint
-});
-console.log("--------------------------------")

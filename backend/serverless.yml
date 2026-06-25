@@ -26,20 +26,20 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TABLE_NAME}
 
 plugins:
-  - serverless-dynamodb-local
   - serverless-plugin-typescript
   - serverless-offline
+  # - serverless-dynamodb-local
 
 # Plugin order matters: dynamodb-local must come before serverless-offline
 
-custom:
-  dynamodb:
-    stages:
-      - dev
-    start:
-      port: 8000
-      inMemory: true      # no persistence between restarts, fine for dev
-      migrate: true       # auto-creates the table from resources section below
+ # custom:
+ # dynamodb:
+ #   stages:
+ #     - dev
+ #   start:
+ #     port: 8000
+ #     inMemory: true      # no persistence between restarts, fine for dev
+ #     migrate: true       # auto-creates the table from resources section below
 
 functions:
   getList:

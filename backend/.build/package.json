@@ -8,7 +8,9 @@
     "deploy:prod": "serverless deploy --stage prod",
     "logs": "serverless logs -f getList --tail",
     "remove": "serverless remove",
-    "dynamodb:install": "serverless dynamodb install"
+    "dynamodb:install": "serverless dynamodb install",
+    "db:init": "ts-node scripts/init-db.ts",
+    "devdb": "npm run db:init && npm run dev"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",
@@ -23,6 +25,7 @@
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^13.0.0",
     "serverless-plugin-typescript": "^2.1.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0"
   }
 }
