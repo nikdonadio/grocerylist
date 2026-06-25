@@ -2,6 +2,7 @@ import {
   DynamoDBClient,
   ListTablesCommand,
   CreateTableCommand,
+  DeleteTableCommand,
 } from "@aws-sdk/client-dynamodb";
 
 const TABLE_NAME = "grocerylist-dev";
@@ -19,12 +20,12 @@ async function initDb() {
   console.log("Checking DynamoDB tables...");
 
   const tables = await client.send(new ListTablesCommand({}));
-
   console.log("Existing tables:", tables.TableNames);
 
   if (tables.TableNames?.includes(TABLE_NAME)) {
-    console.log(`Table already exists: ${TABLE_NAME}`);
-    return;
+    console.log(`Dropping existing table: ${TABLE_NAME} (schema may be stale)`);
+    await client.send(new DeleteTableCommand({ TableName: TABLE_NAME }));
+    console.log("Table dropped.");
   }
 
   console.log(`Creating table: ${TABLE_NAME}`);
@@ -33,22 +34,18 @@ async function initDb() {
     new CreateTableCommand({
       TableName: TABLE_NAME,
       AttributeDefinitions: [
-        {
-          AttributeName: "accessToken",
-          AttributeType: "S",
-        },
+        { AttributeName: "accessToken", AttributeType: "S" },
+        { AttributeName: "itemId",      AttributeType: "S" },
       ],
       KeySchema: [
-        {
-          AttributeName: "accessToken",
-          KeyType: "HASH",
-        },
+        { AttributeName: "accessToken", KeyType: "HASH"  },
+        { AttributeName: "itemId",      KeyType: "RANGE" },
       ],
       BillingMode: "PAY_PER_REQUEST",
     })
   );
 
-  console.log(`Table created: ${TABLE_NAME}`);
+  console.log(`Table created: ${TABLE_NAME} (PK: accessToken, SK: itemId)`);
 }
 
 initDb().catch((err) => {
