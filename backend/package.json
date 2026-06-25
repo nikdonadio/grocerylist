@@ -10,7 +10,12 @@
     "remove": "serverless remove",
     "dynamodb:install": "serverless dynamodb install",
     "db:init": "ts-node scripts/init-db.ts",
-    "devdb": "npm run db:init && npm run dev"
+    "devdb": "npm run db:init && npm run dev",
+    "test": "npx ts-node --project tsconfig.test.json tests/run-all.ts",
+    "test:get": "npx ts-node --project tsconfig.test.json tests/01-getList.ts",
+    "test:add": "npx ts-node --project tsconfig.test.json tests/02-addItem.ts",
+    "test:update": "npx ts-node --project tsconfig.test.json tests/03-updateItem.ts",
+    "test:delete": "npx ts-node --project tsconfig.test.json tests/04-deleteItem.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.0.0",
