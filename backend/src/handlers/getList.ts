@@ -1,42 +1,18 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { db, TABLE_NAME } from "../db";
-import { ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { ListTablesCommand } from "@aws-sdk/client-dynamodb";
+import { Request, Response } from "express";
+import pool from "../db";
 
-// GET /list/{accessToken}
-// Returns all items for a given list token, sorted by creation date.
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const accessToken = event.pathParameters?.accessToken;
+// GET /list/:accessToken
+export async function getList(req: Request, res: Response) {
+  const { accessToken } = req.params;
 
-  if (!accessToken) {
-    return respond(400, { error: "Missing accessToken" });
-  };
- 
-  const result = await db.send( 
-    new QueryCommand({
-      TableName: TABLE_NAME,
-      KeyConditionExpression: "accessToken = :token",
-      ExpressionAttributeValues: { ":token": accessToken },
-    })
+  const result = await pool.query(
+    `SELECT item_id as "itemId", name, checked, created_at as "createdAt"
+     FROM items
+     WHERE access_token = $1
+     ORDER BY created_at ASC`,
+    [accessToken]
   );
 
-  const items = (result.Items ?? []).sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
-  
-  
-  return respond(200, { accessToken, items });
-};
-
-function respond(statusCode: number, body: object) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-    body: JSON.stringify(body),
-  };
+  res.json({ accessToken, items: result.rows });
 }
 

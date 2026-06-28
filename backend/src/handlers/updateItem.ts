@@ -1,57 +1,39 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
-import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { db, TABLE_NAME } from "../db";
+import { Request, Response } from "express";
+import pool from "../db";
 
-// PUT /list/{accessToken}/items/{itemId}
-// Body: { "checked": true } or { "name": "New name" } or both
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const { accessToken, itemId } = event.pathParameters ?? {};
+// PUT /list/:accessToken/items/:itemId
+export async function updateItem(req: Request, res: Response) {
+  const { accessToken, itemId } = req.params;
+  const { checked, name } = req.body ?? {};
 
-  if (!accessToken || !itemId) {
-    return respond(400, { error: "Missing accessToken or itemId" });
+  if (checked === undefined && name === undefined) {
+    return res.status(400).json({ error: "Nothing to update" });
   }
 
-  const body = JSON.parse(event.body ?? "{}");
-
-  // Build update expression dynamically — only update fields that arrive in body
   const updates: string[] = [];
-  const values: Record<string, unknown> = {};
+  const values: unknown[] = [];
 
-  if (body.checked !== undefined) {
-    updates.push("checked = :checked");
-    values[":checked"] = body.checked;
+  if (checked !== undefined) {
+    values.push(checked);
+    updates.push(`checked = ${values.length}`);
   }
-  if (body.name !== undefined) {
-    updates.push("#n = :name");
-    values[":name"] = body.name.trim();
-  }
-
-  if (updates.length === 0) {
-    return respond(400, { error: "Nothing to update" });
+  if (name !== undefined) {
+    values.push(name.trim());
+    updates.push(`name = ${values.length}`);
   }
 
-  const result = await db.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: { accessToken, itemId },
-      UpdateExpression: "SET " + updates.join(", "),
-      // "name" is a reserved word in DynamoDB — needs an alias
-      ExpressionAttributeNames: body.name !== undefined ? { "#n": "name" } : undefined,
-      ExpressionAttributeValues: values,
-      ReturnValues: "ALL_NEW",
-    })
+  values.push(accessToken, itemId);
+  const whereClause = `access_token = ${values.length - 1} AND item_id = ${values.length}`;
+
+  const result = await pool.query(
+    `UPDATE items SET ${updates.join(", ")} WHERE ${whereClause}
+     RETURNING item_id as "itemId", name, checked, created_at as "createdAt"`,
+    values
   );
 
-  return respond(200, result.Attributes ?? {});
-};
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: "Item not found" });
+  }
 
-function respond(statusCode: number, body: object) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-    body: JSON.stringify(body),
-  };
+  res.json(result.rows[0]);
 }
