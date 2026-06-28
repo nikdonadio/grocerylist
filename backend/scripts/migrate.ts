@@ -10,7 +10,7 @@ async function migrate() {
       item_id      TEXT NOT NULL,
       name         TEXT NOT NULL,
       checked      BOOLEAN NOT NULL DEFAULT false,
-      created_at   TEXT NOT NULL,
+      created_at   TIMESTAMP NOT NULL,
       PRIMARY KEY (access_token, item_id)
     )
   `);

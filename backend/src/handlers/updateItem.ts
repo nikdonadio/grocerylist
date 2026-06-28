@@ -10,23 +10,32 @@ export async function updateItem(req: Request, res: Response) {
     return res.status(400).json({ error: "Nothing to update" });
   }
 
+  if (checked !== undefined && typeof checked !== "boolean") {
+    return res.status(400).json({ error: "'checked' must be a boolean" });
+  }
+  if (name !== undefined && (typeof name !== "string" || !name.trim())) {
+    return res.status(400).json({ error: "'name' must be a non-empty string" });
+  }
+
   const updates: string[] = [];
   const values: unknown[] = [];
 
   if (checked !== undefined) {
     values.push(checked);
-    updates.push(`checked = ${values.length}`);
+    updates.push(`checked = $${values.length}`);
   }
   if (name !== undefined) {
     values.push(name.trim());
-    updates.push(`name = ${values.length}`);
+    updates.push(`name = $${values.length}`);
   }
 
-  values.push(accessToken, itemId);
-  const whereClause = `access_token = ${values.length - 1} AND item_id = ${values.length}`;
+  values.push(accessToken);
+  const tokenIndex = values.length;
+  values.push(itemId);
+  const itemIndex = values.length;
 
   const result = await pool.query(
-    `UPDATE items SET ${updates.join(", ")} WHERE ${whereClause}
+    `UPDATE items SET ${updates.join(", ")} WHERE access_token = $${tokenIndex} AND item_id = $${itemIndex}
      RETURNING item_id as "itemId", name, checked, created_at as "createdAt"`,
     values
   );
