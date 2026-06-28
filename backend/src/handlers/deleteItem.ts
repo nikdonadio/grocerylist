@@ -1,32 +1,18 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
-import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
-import { db, TABLE_NAME } from "../db";
+import { Request, Response } from "express";
+import pool from "../db";
 
-// DELETE /list/{accessToken}/items/{itemId}
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const { accessToken, itemId } = event.pathParameters ?? {};
+// DELETE /list/:accessToken/items/:itemId
+export async function deleteItem(req: Request, res: Response) {
+  const { accessToken, itemId } = req.params;
 
-  if (!accessToken || !itemId) {
-    return respond(400, { error: "Missing accessToken or itemId" });
-  }
-
-  await db.send(
-    new DeleteCommand({
-      TableName: TABLE_NAME,
-      Key: { accessToken, itemId },
-    })
+  const result = await pool.query(
+    `DELETE FROM items WHERE access_token = $1 AND item_id = $2`,
+    [accessToken, itemId]
   );
 
-  return respond(200, { deleted: itemId });
-};
+  if (result.rowCount === 0) {
+    return res.status(404).json({ error: "Item not found" });
+  }
 
-function respond(statusCode: number, body: object) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-    body: JSON.stringify(body),
-  };
+  res.json({ deleted: itemId });
 }

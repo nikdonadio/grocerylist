@@ -1,45 +1,24 @@
-import { APIGatewayProxyHandler } from "aws-lambda";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { db, TABLE_NAME } from "../db";
+import pool from "../db";
 
-// POST /list/{accessToken}/items
-// Body: { "name": "Milk" }
-// Creates a new item and appends it to the list.
-export const handler: APIGatewayProxyHandler = async (event) => {
-  const accessToken = event.pathParameters?.accessToken;
-
-  if (!accessToken) {
-    return respond(400, { error: "Missing accessToken" });
+// POST /list/:accessToken/items
+export async function addItem(req: Request, res: Response) {
+  const { accessToken } = req.params;
+  const rawName = req.body?.name;
+  if (typeof rawName !== "string" || !rawName.trim()) {
+    return res.status(400).json({ error: "Item name must be a non-empty string" });
   }
+  const name = rawName.trim();
 
-  const body = JSON.parse(event.body ?? "{}");
-  const name = body.name?.trim();
+  const itemId = uuidv4();
+  const createdAt = new Date().toISOString();
 
-  if (!name) {
-    return respond(400, { error: "Item name is required" });
-  }
+  await pool.query(
+    `INSERT INTO items (access_token, item_id, name, checked, created_at)
+     VALUES ($1, $2, $3, false, $4)`,
+    [accessToken, itemId, name, createdAt]
+  );
 
-  const item = {
-    accessToken,
-    itemId: uuidv4(),
-    name,
-    checked: false,
-    createdAt: new Date().toISOString(),
-  };
-
-  await db.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
-
-  return respond(201, item);
-};
-
-function respond(statusCode: number, body: object) {
-  return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-    body: JSON.stringify(body),
-  };
+  res.status(201).json({ accessToken, itemId, name, checked: false, createdAt });
 }
