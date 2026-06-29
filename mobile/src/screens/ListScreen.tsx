@@ -22,29 +22,39 @@ type ListRow =
 
 export default function ListScreen({ accessToken, onLogout }: Props) {
   const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [newItemName, setNewItemName] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadList() {
+  async function loadList(isRefresh = false) {
     try {
-      setLoading(true);
-      setError(null);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setInitialLoading(true);
+        setError(null);
+      }
       const data = await fetchList(accessToken);
       setItems(data);
+      setError(null);
     } catch {
-      setError("No se pudo cargar la lista.");
+      // Only show error screen on initial load, not on refresh
+      if (!isRefresh) setError("No se pudo cargar la lista.");
     } finally {
-      setLoading(false);
+      setInitialLoading(false);
+      setRefreshing(false);
     }
   }
 
   useEffect(() => {
-    loadList();
+    loadList(false);
   }, []);
 
   async function handleAdd() {
+    // Guard against duplicate submits (keyboard path can bypass button disabled state)
+    if (adding) return;
     const name = newItemName.trim();
     if (!name) return;
     try {
@@ -60,10 +70,12 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
   }
 
   async function handleToggle(item: Item) {
+    // Use the intended target value, not a re-inversion, to stay in sync with backend
+    const targetChecked = !item.checked;
     try {
-      await toggleItem(accessToken, item.itemId, !item.checked);
+      await toggleItem(accessToken, item.itemId, targetChecked);
       setItems((prev) =>
-        prev.map((i) => (i.itemId === item.itemId ? { ...i, checked: !i.checked } : i))
+        prev.map((i) => (i.itemId === item.itemId ? { ...i, checked: targetChecked } : i))
       );
     } catch {
       Alert.alert("Error", "No se pudo actualizar el ítem.");
@@ -79,7 +91,6 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
     }
   }
 
-  // Construir la lista con separador si hay items en el carrito
   function buildRows(): ListRow[] {
     const pending = items.filter((i) => !i.checked);
     const inCart = items.filter((i) => i.checked);
@@ -151,12 +162,12 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
       </View>
 
       {/* List */}
-      {loading ? (
+      {initialLoading ? (
         <ActivityIndicator style={styles.loader} size="large" color="#2e7d32" />
       ) : error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadList}>
+          <TouchableOpacity style={styles.retryButton} onPress={() => loadList(false)}>
             <Text style={styles.retryText}>Reintentar</Text>
           </TouchableOpacity>
         </View>
@@ -165,8 +176,8 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
           data={rows}
           keyExtractor={(row) => row.type === "item" ? row.data.itemId : row.key}
           renderItem={renderRow}
-          onRefresh={loadList}
-          refreshing={loading}
+          onRefresh={() => loadList(true)}
+          refreshing={refreshing}
           ListEmptyComponent={
             <Text style={styles.emptyText}>La lista está vacía. ¡Agregá algo!</Text>
           }
