@@ -29,12 +29,22 @@ export async function toggleItem(
   itemId: string,
   checked: boolean
 ): Promise<void> {
-  const res = await fetch(`${BASE_URL}/list/${accessToken}/items/${itemId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ checked }),
-  });
-  if (!res.ok) throw new Error("Failed to update item");
+  // Retry once on network failure — safe because checked is idempotent
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(`${BASE_URL}/list/${accessToken}/items/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checked }),
+      });
+      if (!res.ok) throw new Error("Failed to update item");
+      return;
+    } catch (err) {
+      if (attempt === 2) throw err;
+      // Wait 800ms before retry
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+  }
 }
 
 export async function deleteItem(
