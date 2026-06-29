@@ -27,6 +27,7 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
   const [newItemName, setNewItemName] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
 
   async function loadList(isRefresh = false) {
     try {
@@ -53,7 +54,6 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
   }, []);
 
   async function handleAdd() {
-    // Guard against duplicate submits (keyboard path can bypass button disabled state)
     if (adding) return;
     const name = newItemName.trim();
     if (!name) return;
@@ -63,15 +63,18 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
       setItems((prev) => [item, ...prev]);
       setNewItemName("");
     } catch {
-      Alert.alert("Error", "No se pudo agregar el ítem.");
+      // The item may have been created even if the response was lost—refresh to get real state
+      await loadList(true);
+      Alert.alert("Atención", "Hubo un problema de red. La lista fue actualizada.");
     } finally {
       setAdding(false);
     }
   }
 
   async function handleToggle(item: Item) {
-    // Use the intended target value, not a re-inversion, to stay in sync with backend
+    if (togglingIds.has(item.itemId)) return;
     const targetChecked = !item.checked;
+    setTogglingIds((prev) => new Set(prev).add(item.itemId));
     try {
       await toggleItem(accessToken, item.itemId, targetChecked);
       setItems((prev) =>
@@ -79,6 +82,8 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
       );
     } catch {
       Alert.alert("Error", "No se pudo actualizar el ítem.");
+    } finally {
+      setTogglingIds((prev) => { const s = new Set(prev); s.delete(item.itemId); return s; });
     }
   }
 
@@ -112,17 +117,25 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
     }
 
     const item = row.data;
+    const isToggling = togglingIds.has(item.itemId);
     return (
       <View style={styles.itemRow}>
-        <TouchableOpacity style={styles.itemLeft} onPress={() => handleToggle(item)}>
-          <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
-            {item.checked && <Text style={styles.checkmark}>✓</Text>}
+        <TouchableOpacity
+          style={styles.itemLeft}
+          onPress={() => handleToggle(item)}
+          disabled={isToggling}
+        >
+          <View style={[styles.checkbox, item.checked && styles.checkboxChecked, isToggling && styles.checkboxToggling]}>
+            {isToggling
+              ? <ActivityIndicator size="small" color={item.checked ? "#fff" : "#2e7d32"} />
+              : item.checked && <Text style={styles.checkmark}>✓</Text>
+            }
           </View>
           <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>
             {item.name}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDelete(item.itemId)} style={styles.deleteBtn}>
+        <TouchableOpacity onPress={() => handleDelete(item.itemId)} style={styles.deleteBtn} disabled={isToggling}>
           <Text style={styles.deleteText}>✕</Text>
         </TouchableOpacity>
       </View>
@@ -135,7 +148,7 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🛒 Lista</Text>
+        <Text style={styles.headerTitle}>🛒 Lista: {accessToken}</Text>
         <TouchableOpacity onPress={onLogout}>
           <Text style={styles.logoutText}>Cambiar lista</Text>
         </TouchableOpacity>
@@ -144,13 +157,14 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
       {/* Add item */}
       <View style={styles.addRow}>
         <TextInput
-          style={styles.addInput}
+          style={[styles.addInput, adding && styles.addInputDisabled]}
           placeholder="Agregar ítem..."
           placeholderTextColor="#aaa"
           value={newItemName}
           onChangeText={setNewItemName}
           onSubmitEditing={handleAdd}
           returnKeyType="done"
+          editable={!adding}
         />
         <TouchableOpacity
           style={[styles.addButton, (!newItemName.trim() || adding) && styles.addButtonDisabled]}
@@ -226,6 +240,9 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: "#222",
+  },
+  addInputDisabled: {
+    opacity: 0.5,
   },
   addButton: {
     backgroundColor: "#2e7d32",
@@ -310,6 +327,10 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: {
     backgroundColor: "#2e7d32",
+  },
+  checkboxToggling: {
+    borderColor: "#aaa",
+    opacity: 0.7,
   },
   checkmark: {
     color: "#fff",
