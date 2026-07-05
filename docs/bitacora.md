@@ -70,4 +70,50 @@ DELETE /list/:token/items/:id           → item borrado
 
 ---
 
+## Sesión 5 (2026-07-05) — Reestructuración de documentación de proceso
+
+### Contexto
+
+El master prompt original (`MASTER PROMPT - AI-Driven MVP Dev.md`) especificaba
+stack AWS Lambda + API Gateway + DynamoDB + SAM/Serverless, heredado del plan
+inicial del proyecto. Esto contradecía el estado real en producción (Node +
+Express + PostgreSQL en Railway), generando riesgo de confusión/contradicción
+en sesiones futuras.
+
+### Decisión
+
+Separaron las responsabilidades de los documentos de proceso/producto en dos
+archivos con una única fuente de verdad cada uno:
+
+- **`docs/MASTER PROMPT - AI-Driven MVP Dev.md`** → cómo trabajamos: branching,
+  Jira, disciplina de commits, límites de scope por componente, entorno de
+  desarrollo. Se agregó una nota histórica explicando el abandono del plan AWS
+  (bloqueo de verificación de cuenta + problema de diseño de esquema en
+  DynamoDB detectado en tests tempranos).
+- **`specs/spec.md`** → qué es el producto ahora: requisitos, stack vigente,
+  endpoints, reglas de arquitectura, decisiones técnicas aplicadas, roadmap.
+
+Se estableció una jerarquía explícita de documentos (ver §0 del master prompt)
+para que cada dato viva en un solo lugar: proceso → master prompt; producto →
+spec; histórico/decisiones puntuales → esta bitácora.
+
+Las 3 decisiones de diseño marcadas `[Decision]` en Jira (estado "No hay",
+categorías JSON vs. tabla, persistencia de listas favoritas) ya fueron
+respondidas y cerradas en sus tickets — pendiente sincronizar el detalle de
+cada una al spec en una próxima sesión.
+
+### Archivos versionados
+
+- `docs/MASTER PROMPT - AI-Driven MVP Dev - OLD-20260705.md` (snapshot del original)
+- `docs/MASTER PROMPT - AI-Driven MVP Dev.md` (nuevo, vigente)
+- `specs/spec-DEPRECATED-20260705.md` (snapshot del original)
+- `specs/spec.md` (nuevo, vigente)
+
+### Pendiente para próximas sesiones
+
+- [ ] Sincronizar el detalle de las 3 decisiones `[Decision]` ya cerradas en Jira hacia `spec.md`
+- [ ] Validar que Project Instructions (texto pegado en Claude) refleje el nuevo master prompt
+
+---
+
 > Experimento de desarrollo asistido por IA — todo el código generado con Claude.

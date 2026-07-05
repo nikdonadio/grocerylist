@@ -1,333 +1,140 @@
-# Family Shopping List App - MVP v1
+# SPEC — Grocery List App
 
-## Objective
-
-Build an extremely simple shared shopping list application for family use.
-
-The purpose of this version is validation of behavior in real usage:
-
-* Does a shared list improve grocery shopping coordination?
-* Is it usable in real-time while shopping?
-* Is the “shared checklist” model intuitive enough?
-
-This version prioritizes speed, simplicity, and minimal infrastructure complexity.
+> Este documento define **qué es el producto ahora mismo**: requisitos, stack
+> vigente, endpoints, arquitectura. El *cómo trabajamos* (branching, Jira,
+> disciplina de commits) vive en `docs/MASTER PROMPT - AI-Driven MVP Dev.md`, no acá.
 
 ---
 
-## Intended Use
+## 1. Product goal
 
-* Everyone in the family can add items to a shared shopping list at any time.
-* While shopping in the store, users can check/cross items as they are bought.
-* The list acts as a shared live checklist of needed and purchased items.
+Una lista de compras familiar compartida:
 
----
-
-## Sync Behavior
-
-* The system maintains a **single shared list state**.
-* **Eventual consistency is acceptable** (no real-time synchronization required).
-* Users may refresh the browser at any time to retrieve the latest state.
-* If another user modifies the list (add / update / delete / check items), changes are visible after refresh or next fetch.
-* No WebSockets, SSE, or push mechanisms are required.
-* No conflict resolution beyond **last write wins**.
+- Todos pueden agregar ítems
+- Los que están en el súper marcan/tildan ítems al comprarlos
+- Todos ven el estado actualizado al refrescar
+- Sin autenticación
+- Acceso vía token secreto en la URL
 
 ---
 
-## Access Model (CRITICAL DESIGN)
+## 2. Requisitos
 
-### Single List + Secret Access Token
+### Funcionales
 
-The application exposes **one shared shopping list** protected by a secret access token.
+- Acceder a la lista vía `/list/{accessToken}`
+- Agregar ítem
+- Marcar/desmarcar ítem (checked/unchecked)
+- Eliminar ítem
+- Refrescar trae el estado más reciente
 
-* There are no user accounts.
-* There is no authentication system.
-* There are no roles or permissions.
+### No funcionales
 
-Access is granted only if the correct token is provided.
+- Sin sincronización en tiempo real (sin WebSockets)
+- Consistencia eventual aceptable
+- Last write wins
+- UI mobile-first
+- Arquitectura extremadamente simple
 
 ---
 
-### Access Pattern
+## 3. Estado actual — despliegue en producción
 
-Example:
+| Componente | Detalle |
+|---|---|
+| Backend | Node.js + Express + TypeScript — `grocerylist-production-ddd6.up.railway.app` |
+| Frontend web | React + Vite + TypeScript — `brave-stillness-production-483f.up.railway.app` |
+| Mobile | React Native + Expo SDK 54, APK vía EAS Build, instalada nativamente en Android (app ID `app.grocerylist.family`) |
+| Base de datos | PostgreSQL en Railway (Amsterdam) |
+| Hosting | Railway (los 3 servicios + Postgres) |
 
-```text id="access1"
-/list/{accessToken}
+> Nota: el stack originalmente planeado era AWS Lambda + API Gateway +
+> DynamoDB + SAM/Serverless. Ese plan se abandonó — ver contexto completo en
+> `docs/MASTER PROMPT - AI-Driven MVP Dev.md` sección 2. Este `spec.md` refleja únicamente el
+> stack **vigente**.
+
+### Funcionalidad mobile implementada
+
+CRUD completo vía `TokenScreen` + `ListScreen`; separación visual de ítems
+pendientes vs. en el carrito; persistencia del token en AsyncStorage;
+estados de carga por ítem; retry seguro en toggle (no en add, para evitar
+duplicados); auto-refresh ante fallo al agregar; nombre de la lista mostrado
+en el header.
+
+---
+
+## 4. Backend — endpoints
+
 ```
-
-or:
-
-```text id="access2"
-/list?token={accessToken}
-```
-
-Either approach is valid, but path-based routing is preferred for simplicity.
-
----
-
-### Security Model
-
-* The `accessToken` is a **high-entropy random string**.
-* Possession of the token grants full access to the list.
-* If the token is lost or leaked, the list is compromised (acceptable for MVP).
-* No additional security layers are required in v1.
-
----
-
-## Scope
-
-### Included
-
-* Create and access the single shared list.
-* Add items to the list.
-* Mark items as purchased (checked).
-* Unmark items.
-* Delete items.
-* View list items on mobile and desktop browsers.
-
----
-
-### Excluded
-
-* User accounts or authentication.
-* Multiple lists per family or user.
-* Permissions or roles.
-* List history or audit logs.
-* Notifications or reminders.
-* Product catalog or barcode scanning.
-* Offline mode.
-* Real-time updates (WebSockets / SSE).
-* Analytics or tracking.
-
----
-
-## Functional Requirements
-
-### Shopping List
-
-* The system contains exactly **one active shopping list**.
-* The list has an optional name (default: "Shopping List").
-
-### Item
-
-Each item includes:
-
-* `id` (UUID)
-* `name` (string)
-* `checked` (boolean)
-* `createdAt` (timestamp)
-
----
-
-## Core User Flows
-
-### 1. Access List
-
-* User opens URL containing the access token.
-* Backend validates token.
-* List is returned.
-
----
-
-### 2. Add Item
-
-* User submits item name.
-* Item is appended to list.
-
----
-
-### 3. Toggle Item
-
-* User marks/unmarks item as purchased.
-* State updates immediately in UI.
-
----
-
-### 4. Delete Item
-
-* User removes item from list.
-
----
-
-### 5. Refresh / Sync
-
-* Page refresh fetches latest state from backend.
-* No live updates required.
-
----
-
-## Non-Functional Requirements
-
-### Simplicity
-
-* Optimize for minimal code and minimal AWS complexity.
-* Avoid premature scalability or abstraction layers.
-
-### Performance
-
-* List must load quickly on mobile networks.
-* API responses should be lightweight.
-
-### Security
-
-* Access token must be unguessable (UUID or random string with sufficient entropy).
-* No sensitive data is stored in the system.
-
-### Reliability
-
-* Concurrent edits allowed with **last write wins** behavior.
-* No merge conflict handling required.
-
----
-
-## Suggested Architecture (Non-binding)
-
-### Frontend
-
-* React
-* TypeScript
-* Vite
-* Mobile-first responsive UI
-* Optional PWA configuration
-
----
-
-### Backend
-
-* Node.js (TypeScript preferred)
-* AWS Lambda
-* API Gateway
-
----
-
-### Database
-
-* Amazon DynamoDB
-
-Single table or minimal schema approach recommended.
-
----
-
-### Infrastructure
-
-* AWS Serverless stack
-* Infrastructure as Code optional but recommended:
-
-  * AWS SAM
-  * Serverless Framework
-
----
-
-## API Endpoints (Minimal)
-
-### Get List
-
-```http id="api1"
-GET /list/{accessToken}
+GET    /list/:accessToken
+POST   /list/:accessToken/items        body: { name: string }
+PUT    /list/:accessToken/items/:id    body: { checked?: boolean, name?: string }
+DELETE /list/:accessToken/items/:id
 ```
 
 ---
 
-### Add Item
+## 5. Reglas de arquitectura
 
-```http id="api2"
-POST /list/{accessToken}/items
-```
+> Principios generales de estilo de código (simplicidad, evitar
+> sobre-ingeniería) viven en `docs/MASTER PROMPT - AI-Driven MVP Dev.md` §1. Acá solo las
+> restricciones concretas de este producto.
 
-Request:
-
-```json id="req1"
-{
-  "name": "Milk"
-}
-```
-
----
-
-### Update Item
-
-```http id="api3"
-PUT /list/{accessToken}/items/{itemId}
-```
-
-Request:
-
-```json id="req2"
-{
-  "name": "Milk",
-  "checked": true
-}
-```
+- Sin microservicios
+- Sin sistema de autenticación, sin cuentas de usuario, sin permisos complejos
+- Modelo de lista única
+- Acceso controlado ÚNICAMENTE vía `accessToken` en la URL
+- No introducir: cuentas de usuario, permisos complejos, sync en tiempo real,
+  event sourcing, CQRS, microservicios
 
 ---
 
-### Delete Item
+## 6. Decisiones técnicas ya tomadas (aplican hacia adelante)
 
-```http id="api4"
-DELETE /list/{accessToken}/items/{itemId}
-```
-
----
-
-## Data Model
-
-### Shopping List
-
-```json id="data1"
-{
-  "accessToken": "random-secret-string",
-  "name": "Shopping List",
-  "createdAt": "ISO_TIMESTAMP"
-}
-```
+- **Retry asimétrico:** retry es seguro en `toggle` (idempotente) pero causó
+  ítems duplicados en `addItem` → se sacó el retry de add y se agregó
+  auto-refresh para que el usuario vea el estado real tras una falla de red
+- **Offline strategy:** distinguir "modo lista" (colaborativo, buena señal) de
+  "modo compra" (usuario solo en el súper, señal mala) — offline-first debería
+  aplicar solo al modo compra, no al modo lista
+- **Diagnóstico de red:** la inestabilidad vista en Expo Go se debía a un
+  doble salto de extensores WiFi, no al código — confirmado ausente con la
+  APK nativa conectando directo a Railway. No re-investigar esto como bug de
+  código si vuelve a aparecer en contexto similar.
 
 ---
 
-### Item
+## 7. Roadmap / backlog vigente
 
-```json id="data2"
-{
-  "itemId": "uuid",
-  "name": "Milk",
-  "checked": false,
-  "createdAt": "ISO_TIMESTAMP"
-}
-```
+Backlog estructurado en Jira, proyecto GL: 7 épicas, ~25 tareas (GL-8 a
+GL-32). Prioridad para próximas sesiones:
 
----
+1. Renombrar app de "mobile" a "Lista de Compras" + ícono de carrito
+2. Sección de "en el carrito" colapsable
+3. Swipe para marcar múltiples ítems
+4. Validación de duplicados al ingresar ítems (case/espacio-insensitive)
+5. Cambio rápido entre 2–3 listas favoritas guardadas (AsyncStorage)
+6. Ordenamiento de ítems
+7. Estado "No hay" (sin stock) como tercer estado de ítem
+8. Categorías fijas con persistencia entre listas
+9. Actualización del README reflejando el stack actual
 
-## Development Strategy
+### Decisiones de diseño — resueltas
 
-Implement vertical slices, not layers.
+Las 3 decisiones marcadas como `[Decision]` en Jira (estado "No hay",
+categorías fijas JSON vs. tabla, persistencia de listas favoritas) ya fueron
+respondidas y cerradas en los comentarios de sus tickets respectivos. Falta
+sincronizar el detalle de cada decisión a este spec — pendiente para una
+próxima revisión conjunta, no bloquea el resto de este documento.
 
-Recommended order:
+### Findings de CodeRabbit diferidos (pendientes de resolver)
 
-1. Create backend infra (Lambda + API Gateway + DynamoDB)
-2. Implement GET list endpoint
-3. Implement add item
-4. Implement toggle item
-5. Implement delete item
-6. Build frontend list UI
-7. Connect frontend to backend
-8. Add mobile responsiveness
-9. Basic testing (manual only)
-
----
-
-## Definition of Done
-
-The MVP is complete when:
-
-* A user can access the list via URL with token.
-* Items can be added, checked, unchecked, and deleted.
-* Multiple devices can use the same list.
-* Refresh shows updated state.
-* No authentication or accounts exist.
+- Retry logic en `toggle` no distingue error de red vs. error HTTP
+- Fallas de AsyncStorage bloquean actualizaciones de estado de auth en
+  `App.tsx`
 
 ---
 
-## Success Criteria (Product)
-
-* Users actually use it during real grocery shopping.
-* Multiple family members interact without confusion.
-* The app replaces or improves paper or WhatsApp shopping lists.
+> Instrucciones de cómo entregar el trabajo (sistema completo vs. snippets
+> parciales, disciplina de cambios) viven en `docs/MASTER PROMPT - AI-Driven MVP Dev.md` §3 y §8.
+> No se repiten acá para evitar contradicciones.
