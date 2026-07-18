@@ -18,7 +18,7 @@ interface Props {
 
 type ListRow =
   | { type: "item"; data: Item }
-  | { type: "separator"; key: string };
+  | { type: "separator"; key: string; count: number };
 
 export default function ListScreen({ accessToken, onLogout }: Props) {
   const [items, setItems] = useState<Item[]>([]);
@@ -28,6 +28,7 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
+  const [cartCollapsed, setCartCollapsed] = useState(false);
 
   async function loadList(isRefresh = false) {
     try {
@@ -101,8 +102,10 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
     const inCart = items.filter((i) => i.checked);
     const rows: ListRow[] = pending.map((i) => ({ type: "item", data: i }));
     if (inCart.length > 0) {
-      rows.push({ type: "separator", key: "separator" });
-      inCart.forEach((i) => rows.push({ type: "item", data: i }));
+      rows.push({ type: "separator", key: "separator", count: inCart.length });
+      if (!cartCollapsed) {
+        inCart.forEach((i) => rows.push({ type: "item", data: i }));
+      }
     }
     return rows;
   }
@@ -110,9 +113,16 @@ export default function ListScreen({ accessToken, onLogout }: Props) {
   function renderRow({ item: row }: { item: ListRow }) {
     if (row.type === "separator") {
       return (
-        <View style={styles.separator}>
-          <Text style={styles.separatorText}>🛒 En el carrito</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.separator}
+          onPress={() => setCartCollapsed((prev) => !prev)}
+          activeOpacity={0.6}
+        >
+          <Text style={styles.separatorText}>
+            🛒 En el carrito ({row.count})
+          </Text>
+          <Text style={styles.separatorChevron}>{cartCollapsed ? "▸" : "▾"}</Text>
+        </TouchableOpacity>
       );
     }
 
@@ -283,6 +293,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   separator: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginHorizontal: 16,
     marginTop: 20,
     marginBottom: 4,
@@ -296,6 +309,10 @@ const styles = StyleSheet.create({
     color: "#888",
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  separatorChevron: {
+    fontSize: 14,
+    color: "#888",
   },
   itemRow: {
     flexDirection: "row",
