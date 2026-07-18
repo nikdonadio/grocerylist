@@ -32,18 +32,33 @@ The goal is to evaluate:
 |---|---|
 | Backend | Node.js + Express + TypeScript |
 | Frontend web | React + Vite + TypeScript |
-| Mobile | React Native + Expo *(coming soon)* |
+| Mobile | React Native + Expo SDK 54 — native Android APK via EAS Build |
 | Database | PostgreSQL (Railway) |
 | Deploy | Railway (backend + frontend + DB) |
 
+> Original plan targeted AWS Lambda + API Gateway + DynamoDB. That plan was
+> abandoned due to AWS account verification blockers; see
+> [`docs/MASTER PROMPT - AI-Driven MVP Dev.md`](<docs/MASTER PROMPT - AI-Driven MVP Dev.md>)
+> section 2 for the full history. The `legacy-aws` branch is kept as a frozen
+> snapshot of that original stack.
+
 ---
 
-## Production URLs
+## Production status
 
-| Service | URL |
-|---|---|
-| Backend | `https://grocerylist-production-ddd6.up.railway.app` |
-| Frontend | `https://brave-stillness-production-483f.up.railway.app` |
+| Service | Status | URL / detail |
+|---|---|---|
+| Backend | ✅ Online | `https://grocerylist-production-ddd6.up.railway.app` |
+| Frontend web | ✅ Online | `https://brave-stillness-production-483f.up.railway.app` |
+| Mobile | ✅ Built & installed | Android APK, app ID `app.grocerylist.family`, connects directly to the Railway backend (no Expo Go) |
+| Database | ✅ Online | PostgreSQL on Railway (Amsterdam) |
+
+### Mobile app features
+
+Full CRUD via `TokenScreen` + `ListScreen`; visual separation of pending vs.
+in-cart items; access token persisted in AsyncStorage; per-item loading
+states; safe retry on toggle (not on add, to avoid duplicates); auto-refresh
+on add failure; list name shown in the header.
 
 ---
 
@@ -65,9 +80,25 @@ DELETE /list/:accessToken/items/:id
 grocerylist/
 ├── backend/      # Express API
 ├── frontend/     # React/Vite web app
-├── mobile/       # React Native/Expo app (coming soon)
-└── docs/         # Development log
+├── mobile/       # React Native/Expo app (Android APK live)
+├── specs/        # Product spec — what the app is/does now (spec.md)
+└── docs/         # Process docs: master prompt, dev log (bitacora.md), session logs
 ```
+
+---
+
+## Project documentation map
+
+This repo keeps process and product documentation separate to avoid
+contradictions:
+
+| Document | Answers... |
+|---|---|
+| [`docs/MASTER PROMPT - AI-Driven MVP Dev.md`](<docs/MASTER PROMPT - AI-Driven MVP Dev.md>) | How we work: branching, Jira, commit discipline, dev environment |
+| [`specs/spec.md`](specs/spec.md) | What the product is right now: requirements, current stack, endpoints, architecture rules |
+| [`docs/bitacora.md`](docs/bitacora.md) | When and why something changed — chronological decision log |
+
+Project management: [Jira board GL](https://nicolasdonadio.atlassian.net/jira/software/projects/GL/boards/34).
 
 ---
 
@@ -91,15 +122,29 @@ npm install
 npm run dev            # port 5173, proxy → localhost:3001
 ```
 
+### Mobile
+
+```bash
+cd mobile
+npm install
+npm start               # Expo dev server; scan QR with Expo Go, or:
+npm run android          # open on a connected Android device/emulator
+```
+
+For a native build (no Expo Go), use EAS Build — see EAS/Expo docs for
+`eas build -p android`.
+
 ---
 
 ## Branching Strategy
 
-- `main` → production, autodeploy on Railway
+- `main` → production, autodeploy on Railway (backend/frontend) + EAS Build (mobile)
 - `dev-railway` → daily working branch
 - `legacy-aws` → snapshot of original AWS stack
 
 Flow: `dev-railway` → PR + CodeRabbit review → merge to `main` → autodeploy.
+Full branching/commit/PR conventions: see
+[`docs/MASTER PROMPT - AI-Driven MVP Dev.md`](<docs/MASTER PROMPT - AI-Driven MVP Dev.md>).
 
 ---
 
@@ -111,6 +156,7 @@ Flow: `dev-railway` → PR + CodeRabbit review → merge to `main` → autodeplo
 - Add / update / delete items
 - Mark items as purchased
 - Refresh-based synchronization
+- Native Android app (APK)
 
 **Excluded**
 - Authentication
