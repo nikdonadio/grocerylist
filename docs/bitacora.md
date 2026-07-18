@@ -116,4 +116,67 @@ cada una al spec en una próxima sesión.
 
 ---
 
+---
+
+## Sesión 6 — Mobile Polish Quick Wins (GL-8, GL-9) — 2026-07-18
+
+### Contexto
+
+Arranque de la épica GL-1 (Mobile Polish). Se trabajaron GL-8 (rename app) y
+GL-9 (ícono carrito) como primer intento del flujo "PR por ticket" (rama +
+PR individual por cada ticket, en vez de por épica completa).
+
+### Decisión — vuelta a "PR por épica", se abandona "PR por ticket"
+
+Se probó branch + PR individual por ticket (GL-8-nombre-app, GL-9-icono-app)
+y resultó overhead innecesario para desarrollo en solitario sin trabajo en
+paralelo: crear rama, pushear, abrir PR, mergear, sincronizar `dev-railway`
+con `main`, borrar rama — por cada cambio chico. Se vuelve al flujo ya
+documentado en el master prompt (§4.6): trabajar los tickets de una épica
+directo en `dev-railway`, un solo PR `dev-railway → main` al cerrar la
+épica o un grupo lógico de tickets. El master prompt no necesitó cambios,
+ya reflejaba este flujo — la desviación fue solo de esta sesión.
+
+### Hallazgo — ramas de ticket creadas sobre `dev-railway` desincronizada
+
+Al crear `GL-8-nombre-app` sobre un `dev-railway` que ya estaba adelantado
+respecto a `main` (con la consolidación de docs de Sesión 5 sin mergear
+todavía), el PR de GL-8 arrastró esos 7 archivos de docs sin relación con el
+ticket. CodeRabbit los señaló con 5 findings — agrupados en **GL-33** (bajo
+GL-7), sin bloquear el merge de GL-8.
+
+### Decisión — modelo de seguridad del accessToken (via GL-33)
+
+CodeRabbit marcó que se perdió el requisito de "token de alta entropía" del
+spec viejo (`spec-DEPRECATED-20260705.md`, pensado para el plan AWS). No fue
+un descuido: la implementación real usa tokens legibles a propósito (ej.
+"family-list", "saturday-shop") para que la familia los recuerde sin
+fricción. Riesgo aceptado para este MVP (sin datos sensibles, uso familiar).
+Queda pendiente documentar esto explícitamente en `spec.md` (parte de GL-33).
+
+### Notas operativas
+
+- `git branch -d` puede advertir "not yet merged to HEAD" aun después de un
+  merge real, si el merge en GitHub fue squash/rebase (SHAs distintos aunque
+  el contenido sea el mismo) — no es un error.
+- Confirmado con el usuario paso a paso: **nunca asumir que un `git merge`
+  ocurrió sin ver el output** — un salto de paso (borrar rama antes de
+  sincronizar) dejó `dev-railway` desactualizado silenciosamente.
+- Para íconos mobile: Filesystem MCP no puede escribir binarios al disco del
+  usuario (`write_file` es solo texto) — el flujo es generar en el
+  contenedor de Claude, `present_files`, y que el usuario copie manualmente.
+- Adaptive icon de Android necesita padding (~62% del canvas) para respetar
+  la safe zone de la máscara circular/redondeada; el ícono normal (`icon.png`)
+  puede ir full-bleed.
+- CodeRabbit excluye PNGs/binarios por defecto (`!**/*.png`) — "Review was
+  skipped due to path filters" en PRs de solo-assets es esperado, no un error.
+
+### Estado al cierre
+
+- GL-8: Hecho (merge a `main`, `dev-railway` sincronizada)
+- GL-9: probado en dispositivo, pendiente merge final y cierre en Jira
+- GL-1: En curso
+
+---
+
 > Experimento de desarrollo asistido por IA — todo el código generado con Claude.
