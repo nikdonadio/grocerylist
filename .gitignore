@@ -152,3 +152,6 @@ Thumbs.db
 .aws-sam/
 cdk.out/
 .aws/
+
+# Source assets (referencia, no usados directamente por la app)
+mobile/assets/carrito-de-compras.png
