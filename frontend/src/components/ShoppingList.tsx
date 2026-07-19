@@ -83,6 +83,7 @@ export default function ShoppingList({
                 type="button"
                 className="section-label section-label--toggle"
                 onClick={() => setCartCollapsed((prev) => !prev)}
+                aria-expanded={!cartCollapsed}
               >
                 <span>🛒 En el carrito ({checked.length})</span>
                 <span className="section-label__chevron">
