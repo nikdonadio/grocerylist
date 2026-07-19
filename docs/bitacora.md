@@ -174,8 +174,13 @@ Queda pendiente documentar esto explícitamente en `spec.md` (parte de GL-33).
 ### Estado al cierre
 
 - GL-8: Hecho (merge a `main`, `dev-railway` sincronizada)
-- GL-9: probado en dispositivo, pendiente merge final y cierre en Jira
-- GL-1: En curso
+- GL-9: Hecho (merge a `main`, `dev-railway` sincronizada)
+- GL-10: Hecho (PR `dev-railway → main` directo, squash & merge, CodeRabbit sin findings, `dev-railway` sincronizada)
+- **GL-1: cerrada** — épica completa
+- GL-11 (swipe-to-check) movido a nueva épica **GL-35** "Findings & On Hold" — backlog diferido, sin fecha
+- **GL-33** creada (bajo GL-7): findings de docs de CodeRabbit arrastrados en el PR de GL-8
+- **GL-34** creada (bajo GL-2): alta tasa de error de red en `addItem` (4/7 en APK+5G) + orden inconsistente en la lista tras el fallback a `loadList`
+- `.gitignore` actualizado: `mobile/assets/carrito-de-compras.png` (asset fuente del ícono, no usado directamente por la app) excluido de versionado
 
 ---
 
