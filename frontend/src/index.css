@@ -150,6 +150,24 @@ body {
   margin: 1.25rem 0 0.5rem;
 }
 
+.section-label--toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 0 0 0.5rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.section-label__chevron {
+  font-size: 0.7rem;
+  color: #aaa;
+}
+
 .checked-list {
   opacity: 0.6;
 }
