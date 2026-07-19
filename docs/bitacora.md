@@ -171,16 +171,28 @@ Queda pendiente documentar esto explícitamente en `spec.md` (parte de GL-33).
 - CodeRabbit excluye PNGs/binarios por defecto (`!**/*.png`) — "Review was
   skipped due to path filters" en PRs de solo-assets es esperado, no un error.
 
+### Human learning
+
+Al definir GL-1 como "mobile polish" y avanzar rápido ticket a ticket, no se
+revisó con ojo crítico si cada mejora tenía un equivalente pendiente en la
+web (GL-10, colapsable, quedó sin su contraparte). El entusiasmo por avanzar
+rápido llevó a no chequear alcance cruzado entre componentes antes de dar
+por cerrada la épica. Aprendizaje: al cerrar una épica "de un componente",
+chequear explícitamente si hay paridad pendiente en los otros (mobile ↔ web)
+antes de cerrarla, no después.
+
 ### Estado al cierre
 
-- GL-8: Hecho (merge a `main`, `dev-railway` sincronizada)
-- GL-9: Hecho (merge a `main`, `dev-railway` sincronizada)
-- GL-10: Hecho (PR `dev-railway → main` directo, squash & merge, CodeRabbit sin findings, `dev-railway` sincronizada)
-- **GL-1: cerrada** — épica completa
+- GL-8, GL-9, GL-10: Hecho (mobile)
+- GL-36, GL-37: Hecho (web — título + favicon, agregados en la misma sesión al notar que GL-1 no cubría web)
+- GL-38: Hecho (web — colapsable + traducción completa de la UI, paridad con mobile)
+- **GL-1: cerrada** — épica completa (mobile + web)
 - GL-11 (swipe-to-check) movido a nueva épica **GL-35** "Findings & On Hold" — backlog diferido, sin fecha
 - **GL-33** creada (bajo GL-7): findings de docs de CodeRabbit arrastrados en el PR de GL-8
 - **GL-34** creada (bajo GL-2): alta tasa de error de red en `addItem` (4/7 en APK+5G) + orden inconsistente en la lista tras el fallback a `loadList`
 - `.gitignore` actualizado: `mobile/assets/carrito-de-compras.png` (asset fuente del ícono, no usado directamente por la app) excluido de versionado
+- Backend local (`backend && npm run dev`, puerto 3001) confirmado funcional contra la DB de Railway, para pruebas de frontend con el proxy de Vite — usar un accessToken de prueba, no uno real, para no ensuciar datos de la familia
+- Dejar correr el "autofix" de CodeRabbit directo en la rama (en vez de revisar y aplicar manualmente) generó un commit propio en `dev-railway` remoto en paralelo a la resolución manual local del mismo conflicto — dos caminos llegando al mismo resultado pero con historiales de commit distintos, forzando un merge extra para reconciliar. A futuro: revisar el autofix antes de dejarlo correr, o sincronizar (`git fetch` + `merge`) inmediatamente después de que corra, antes de seguir trabajando en local.
 
 ---
 
