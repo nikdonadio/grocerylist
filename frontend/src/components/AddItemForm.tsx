@@ -21,14 +21,14 @@ export default function AddItemForm({ onAdd, disabled }: Props) {
       <input
         className="add-input"
         type="text"
-        placeholder="Add item..."
+        placeholder="Agregar ítem..."
         value={value}
         onChange={(e) => setValue(e.target.value)}
         disabled={disabled}
         autoComplete="off"
       />
       <button className="btn-add" type="submit" disabled={disabled || !value.trim()}>
-        Add
+        Agregar
       </button>
     </form>
   );

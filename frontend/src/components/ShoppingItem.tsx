@@ -21,7 +21,7 @@ export default function ShoppingItem({ item, onToggle, onDelete }: Props) {
       <button
         className="btn-delete"
         onClick={() => onDelete(item.itemId)}
-        aria-label={`Delete ${item.name}`}
+        aria-label={`Eliminar ${item.name}`}
       >
         ✕
       </button>

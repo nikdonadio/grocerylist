@@ -21,6 +21,7 @@ export default function ShoppingList({
   onItemsChange,
 }: Props) {
   const [adding, setAdding] = useState(false);
+  const [cartCollapsed, setCartCollapsed] = useState(false);
 
   async function handleAdd(name: string) {
     setAdding(true);
@@ -51,9 +52,9 @@ export default function ShoppingList({
   return (
     <div className="container">
       <header className="header">
-        <h1>🛒 Shopping List</h1>
+        <h1>🛒 Lista de Compras</h1>
         <button className="btn-refresh" onClick={onRefresh} disabled={loading}>
-          {loading ? "..." : "↻ Refresh"}
+          {loading ? "..." : "↻ Actualizar"}
         </button>
       </header>
 
@@ -62,7 +63,7 @@ export default function ShoppingList({
       {error && <p className="error">{error}</p>}
 
       {loading && items.length === 0 ? (
-        <p className="loading">Loading...</p>
+        <p className="loading">Cargando...</p>
       ) : (
         <>
           <ul className="item-list">
@@ -78,22 +79,34 @@ export default function ShoppingList({
 
           {checked.length > 0 && (
             <>
-              <p className="section-label">In the cart</p>
-              <ul className="item-list checked-list">
-                {checked.map((item) => (
-                  <ShoppingItem
-                    key={item.itemId}
-                    item={item}
-                    onToggle={handleToggle}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </ul>
+              <button
+                type="button"
+                className="section-label section-label--toggle"
+                onClick={() => setCartCollapsed((prev) => !prev)}
+                aria-expanded={!cartCollapsed}
+              >
+                <span>🛒 En el carrito ({checked.length})</span>
+                <span className="section-label__chevron">
+                  {cartCollapsed ? "▸" : "▾"}
+                </span>
+              </button>
+              {!cartCollapsed && (
+                <ul className="item-list checked-list">
+                  {checked.map((item) => (
+                    <ShoppingItem
+                      key={item.itemId}
+                      item={item}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </ul>
+              )}
             </>
           )}
 
           {items.length === 0 && (
-            <p className="empty-state">List is empty. Add your first item!</p>
+            <p className="empty-state">La lista está vacía. ¡Agregá tu primer ítem!</p>
           )}
         </>
       )}
